@@ -36,22 +36,42 @@ insert into albums  (name, year, catalogue_id) values
 -- Insert Tracks
 
 insert into tracks  (name, duration, album_id, catalogue_id) values
-	('track 1', 125, 1, 2),
-	('track 2', 140, 1, 2),
-	('track 3', 60, 2, 3),
-	('track 4', 88, 2, 4),
-	('track 5', 200, 2, 1),
-	('track 6', 195, 2, 3),
-	('track 7', 300, 3, 5),
-	('track 8', 150, 3, 7),
-	('track 9', 128, 4, 7),
-	('track 10', 130, 4, 4),
-	('track 11', 130, 5, 4),
-	('track 12', 40, 6, 7),
-	('track 13', 15, 6, 4),
-	('track 14', 88, 7, 5),
-	('track 15', 99, 8, 6);
+	('track 1', 125, 1),
+	('track 2', 140,1 ),
+	('track 3', 60, 2),
+	('track 4', 88, 2),
+	('track 5', 200, 2),
+	('track 6', 195, 2),
+	('track 7', 300, 3),
+	('track 8', 150, 3),
+	('track 9', 128, 4),
+	('track 10', 130, 4),
+	('track 11', 130, 5),
+	('track 12', 40, 6),
+	('track 13', 15, 6),
+	('track 14', 88, 7),
+	('track 15', 99, 8);
 
+insert into tracks  (name, duration, album_id) values
+	('track 16', 68, 8);
+-- Insert Tracks_Catalogue
+
+insert into Tracks_Catalogue  (catalogue_id, track_id) values
+	(1, 16),
+	(1, 17),
+	(2, 18),
+	(2, 19),
+	(2, 20),
+	(2, 21),
+	(3, 22),
+	(3, 23),
+	(4, 24),
+	(4, 25),
+	(5, 26),
+	(6, 27),
+	(6, 28),
+	(7, 29),
+	(8, 30);
 
 -- Insert Composers
 
