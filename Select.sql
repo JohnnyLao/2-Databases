@@ -4,8 +4,8 @@ select name, year from albums
 where year = 2017;
 
 select name, duration from tracks
-order by duration desc
-limit 1;
+where duration = (select max(duration) from tracks)
+
 
 select name, duration from tracks
 where duration >= 210;
@@ -85,7 +85,7 @@ select a.name, count(table2.name) from albums a
 	join tracks t on t.album_id = al.id
 	group by al.name, t.name) 
 	table2 on a.name = table2.name;
-;
+
 
 
 
