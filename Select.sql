@@ -4,7 +4,7 @@ select name, year from albums
 where year = 2017;
 
 select name, duration from tracks
-where duration = (select max(duration) from tracks)
+where duration = (select max(duration) from tracks);
 
 
 select name, duration from tracks
@@ -20,6 +20,7 @@ select name from tracks
 where name like ('%2');
 
 
+
 -- HW 4
 
 select c.name, count (composer_id) from composer_genre co
@@ -28,11 +29,10 @@ select c.name, count (composer_id) from composer_genre co
 	order by count desc;
 
 
-select a.name, year, count(t.name) from albums a 
+select a.name, a.year, count(t.name) from albums a 
 	left join tracks t on t.album_id = a.id
-	group by a.name, year
+	group by a.name, a.year
 	having year in('2019', '2020')
-	order by a.name;
 
 
 select a.name, AVG(duration) from albums a 
@@ -41,11 +41,15 @@ select a.name, AVG(duration) from albums a
 	order by avg desc;
 
 
-select c.name, a.name, a.year from album_composer ac 
+select name from composers c 
+where name not in 
+(
+	select c.name from album_composer ac 
 	join composers c on ac.composer_id = c.id
 	join albums a on ac.id = a.id
 	group by c.name, a.name, a.year
-	having year not in ('2020');
+	having year in ('2020')
+);
 
 
 select co.name, c.name from composers co
@@ -71,20 +75,26 @@ select t.name from tracks t
 	full join catalogue c on tc.catalogue_id = c.id 
 	where c.name is null;
 
-select c.name, t.name, min(t.duration) from tracks t 
+
+select c.name, t.name, duration from tracks t 
 	join albums a on t.album_id = a.id
 	join album_composer ac on a.id = ac.composer_id 
-	join composers c on ac.id = c.id
-	group by c.name, t.name
-	order by min(duration)
-	limit 3;
+	join composers c on ac.composer_id = c.id
+	group by c.name, t.name, t.duration 
+	having duration = (select min(duration) from tracks);
 	
-select a.name, count(table2.name) from albums a 	
-	full join 
-	(select al.name, t.name, count(distinct al.name) from albums al 
-	join tracks t on t.album_id = al.id
-	group by al.name, t.name) 
-	table2 on a.name = table2.name;
+
+select a.name, count(t.id) from albums a 
+join tracks t on t.album_id = a.id
+group by a.name
+having count(t.id)  = (select count(t.id) from albums a 
+join tracks t on t.album_id = a.id
+group by a.name
+order by count(t.id)
+limit 1);
+
+
+
 
 
 
