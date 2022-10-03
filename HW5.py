@@ -1,132 +1,179 @@
 import psycopg2
 
 
-def create_db(conn):
-    with conn.cursor() as cur:
-        cur.execute("""
-            DROP TABLE phones;
-            DROP TABLE user_info;
+def del_db(conn, cur):
+    cur.execute("""
+        DROP TABLE phones;
+        DROP TABLE user_info;
+    """)
+    print("DB Deleted")
+    conn.commit()
+
+
+def create_db(conn, cur):
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS user_info(
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(40) NOT NULL,
+            surname VARCHAR(40) NOT NULL,
+            email VARCHAR(50) NOT NULL      
+        );
         """)
-
-        cur.execute(
-            """CREATE TABLE IF NOT EXISTS user_info(
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(40) NOT NULL,
-                surname VARCHAR(40) NOT NULL,
-                email VARCHAR(50) NOT NULL      
-            );
-            """)
-
-        cur.execute(
-            """CREATE TABLE IF NOT EXISTS phones(
-                id SERIAL PRIMARY KEY,
-                number INTEGER,
-                user_id INTEGER REFERENCES user_info (id)    
-            );
-            """)
-        print("DB Created")
-        conn.commit()
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS phones(
+            id SERIAL PRIMARY KEY,
+            number INTEGER,
+            user_id INTEGER REFERENCES user_info (id)    
+        );
+        """)
+    print("DB Created")
+    conn.commit()
 
 
-def add_client(conn, first_name, second_name, email):
-    with conn.cursor() as cur:
-        cur.execute(
-            """INSERT into user_info (name, surname, email) values (%s, %s, %s);
-            """, (first_name, second_name, email,))
-        conn.commit()
-        print("User", first_name, second_name, email, "Added")
+def add_client(conn, cur, first_name, second_name, email):
+    cur.execute(
+        """INSERT into user_info (name, surname, email) values (%s, %s, %s);
+        """, (first_name, second_name, email,))
+    conn.commit()
+    print("User", first_name, second_name, email, "Added")
 
 
-def add_phone(conn, user_id, phone):
-    with conn.cursor() as cur:
-        cur.execute(
-            """INSERT into phones (number, user_id) values (%s, %s);
-            """, (phone, user_id,))
-        conn.commit()
-        print("User #", user_id, phone, "Added")
+def add_phone(conn, cur, user_id, phone):
+    cur.execute(
+        """INSERT into phones (number, user_id) values (%s, %s);
+        """, (phone, user_id,))
+    conn.commit()
+    print("User #", user_id, phone, "Added")
 
 
-def change_client(conn, user_id, first_name=None, second_name=None, email=None):
-    with conn.cursor() as cur:
+def change_client(conn, cur, user_id, first_name, second_name, email):
+    if first_name != None:
         cur.execute(
             """UPDATE user_info 
-            SET name = %s, surname = %s, email = %s
+            SET name = %s
             WHERE id = %s;
-            """, (first_name, second_name, email, user_id))
+            """, (first_name, user_id))
         conn.commit()
-        print("User #", user_id, first_name, second_name, email, "Changed")
-
-
-def delete_phone(conn, user_id):
-    with conn.cursor() as cur:
+        print("User #", user_id, "First name changed to", first_name)
+    elif second_name != None:
         cur.execute(
-            """DELETE FROM phones 
+            """UPDATE user_info 
+            SET surname = %s
             WHERE id = %s;
-            """, (user_id,))
+            """, (second_name, user_id))
         conn.commit()
-        print("User #", user_id, "Phones deleted")
-
-
-def delete_client(conn, user_id):
-    with conn.cursor() as cur:
+        print("User #", user_id, "Second name changed to", second_name)
+    elif email != None:
         cur.execute(
-            """DELETE FROM user_info 
+            """UPDATE user_info 
+            SET email = %s
             WHERE id = %s;
-            """, (user_id,))
+            """, (email, user_id))
         conn.commit()
-        print("User #", user_id, "deleted")
+        print("User #", user_id, "Email changed to", email)
+    # else:
+    #     pass
 
 
-def find_client(conn, first_name=None, second_name=None, email=None):
-    with conn.cursor() as cur:
-        cur.execute(
-            """SELECT name, surname, email FROM user_info 
-            WHERE name = %s OR surname = %s OR email = %s;
-            """, (first_name, second_name, email))
-        print(cur.fetchone())
-
-print("""СПИСОК КОМАНД:-->>>
-        "create" - создать структуру БД (Старая БД сотрётся)
-        "add client"- добавить клиента
-        "add phone" - добавить телефон для существующего клиента
-        "change" - изменить данные о клиенте
-        "rm phone" - удалить телефоны для существующего клиента
-        "rm client" - удалить существующего клиента
-        "find" - найти клиента по его данным (имени, фамилии, email-у или телефону)""")
+def delete_phone(conn, cur, user_id):
+    cur.execute(
+        """DELETE FROM phones 
+        WHERE id = %s;
+        """, (user_id,))
+    conn.commit()
+    print("User #", user_id, "Phones deleted")
 
 
-with psycopg2.connect(database="DB", user="postgres", password="123") as conn:
-    while True:
-        command = input("Введите команду: ")
-        if command == "create":
-            create_db(conn)
-        elif command == "add client":
-            first_name = input("Введите Имя: ")
-            second_name = input("Введите Фамилию: ")
-            email = input("Введите почтовый адрес:")
-            add_client(conn, first_name, second_name, email)
-        elif command == "add phone":
-            user_id = input("Введите номер пользователя: ")
-            phone = input("Введите номер телефона: ")
-            add_phone(conn, user_id, phone)
-        elif command == "change":
-            user_id = input("Введите номер пользователя: ")
-            first_name = input("Введите Имя: ")
-            second_name = input("Введите Фамилию: ")
-            email = input("Введите почтовый адрес: ")
-            change_client(conn, user_id, first_name, second_name, email)
-        elif command == "rm phone":
-            user_id = input("Введите номер пользователя: ")
-            delete_phone(conn, user_id)
-        elif command == "rm client":
-            user_id = input("Введите номер пользователя: ")
-            delete_client(conn, user_id)
-        elif command == "find":
-            first_name = input("Введите Имя: ")
-            second_name = input("Введите Фамилию: ")
-            email = input("Введите почтовый адрес: ")
-            find_client(conn, first_name, second_name, email)
-        else:
-            print("Повторите попытку")
+def delete_client(conn, cur, user_id):
+    cur.execute(
+        """DELETE FROM user_info 
+        WHERE id = %s;
+        """, (user_id,))
+    conn.commit()
+    print("User #", user_id, "deleted")
 
-conn.close()
+
+def find_client(cur, first_name, second_name, email):
+    cur.execute(
+        """SELECT name, surname, email FROM user_info 
+        WHERE name = %s OR surname = %s OR email = %s;
+        """, (first_name, second_name, email))
+    print(cur.fetchone())
+
+
+if __name__ == "__main__":
+    print("""СПИСОК КОМАНД:-->>>
+            "create" - создать структуру
+            "del" - удалить БД
+            "add client"- добавить клиента
+            "add phone" - добавить телефон для существующего клиента
+            "change" - изменить данные о клиенте
+            "rm phone" - удалить телефоны для существующего клиента
+            "rm client" - удалить существующего клиента
+            "find" - найти клиента по его данным (имени, фамилии, email-у или телефону)""")
+
+    with psycopg2.connect(database="DB", user="postgres", password="123") as con:
+        while True:
+            with con.cursor() as cur:
+                command = input("Введите команду: ")
+                if command == "create":
+                    create_db(con, cur)
+                elif command == "del":
+                    del_db(con, cur)
+                elif command == "add client":
+                    first_name = input("Введите Имя: ")
+                    second_name = input("Введите Фамилию: ")
+                    email = input("Введите почтовый адрес:")
+                    add_client(con, cur, first_name, second_name, email)
+                elif command == "add phone":
+                    user_id = input("Введите номер пользователя: ")
+                    phone = input("Введите номер телефона: ")
+                    add_phone(con, cur, user_id, phone)
+                elif command == "change":
+                    first_name = None
+                    second_name = None
+                    email = None
+                    user_id = input("Введите номер пользователя: ")
+                    obj = input("""
+Что Вы хотите изменить?
+    Имя
+    Фамилия
+    Почта: 
+    """)
+                    if obj == "Имя":
+                        first_name = input("Введите Имя: ")
+                    elif obj == "Фамилия":
+                        second_name = input("Введите Фамилию: ")
+                    elif obj == "Почта":
+                        email = input("Введите почтовый адрес: ")
+                    else:
+                        print("Повторите попытку")
+                    change_client(con, cur, user_id, first_name, second_name, email)
+                elif command == "rm phone":
+                    user_id = input("Введите номер пользователя: ")
+                    delete_phone(con, cur, user_id)
+                elif command == "rm client":
+                    user_id = input("Введите номер пользователя: ")
+                    delete_client(con, cur, user_id)
+                elif command == "find":
+                    first_name = None
+                    second_name = None
+                    email = None
+                    obj = input("""
+По какому параметру искать?
+    Имя
+    Фамилия
+    Почта: 
+    """)
+                    if obj == "Имя":
+                        first_name = input("Введите Имя: ")
+                    elif obj == "Фамилия":
+                        second_name = input("Введите Фамилию: ")
+                    elif obj == "Почта":
+                        email = input("Введите почтовый адрес: ")
+                    else:
+                        print("Повторите попытку")
+                    find_client(cur, first_name, second_name, email)
+                else:
+                    print("Повторите попытку")
+        conn.close()
